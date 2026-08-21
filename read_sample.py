@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Fold a KXGOLD15M event log into an order book and describe it.
 
+Prints the market's strike and settlement from metadata/, then the book.
+
 Usage: python3 read_sample.py events/KXGOLD15M-26AUG102130-30/*.ndjson.gz
 Stdlib only.
 """
@@ -8,8 +10,11 @@ Stdlib only.
 import collections
 import gzip
 import json
+import os
 import sys
 from decimal import Decimal
+
+METADATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "metadata")
 
 
 def load(paths):
@@ -17,6 +22,32 @@ def load(paths):
         with gzip.open(p, "rt") as fh:
             for line in fh:
                 yield json.loads(line)
+
+
+def describe_market(path):
+    """Print the strike and settlement for the window a tape belongs to.
+
+    The window is the directory name; its parent event ticker drops the last
+    segment. Silently skipped if metadata/ is absent.
+    """
+    window = os.path.basename(os.path.dirname(os.path.abspath(path)))
+    doc_path = os.path.join(METADATA, f"{window.rsplit('-', 1)[0]}.json")
+    if not os.path.isfile(doc_path):
+        return
+    with open(doc_path) as fh:
+        event = json.load(fh)["response"]["event"]
+    market = next((m for m in event.get("markets", []) if m["ticker"] == window), None)
+    if market is None:
+        return
+
+    print(f"{market['ticker']}  {event['sub_title']}")
+    print(f"  strike      {market['strike_type']} {market['floor_strike']}")
+    print(f"  open/close  {market['open_time']} -> {market['close_time']}")
+    print(
+        f"  settled     {market['result']} at {market['expiration_value']} "
+        f"({market['settlement_value_dollars']}/contract, {market['status']})"
+    )
+    print(f"  volume      {market['volume_fp']}, OI {market['open_interest_fp']}\n")
 
 
 def fold(records, until_ms=None):
@@ -48,6 +79,8 @@ def main(paths):
     records = list(load(paths))
     if not records:
         sys.exit("no events")
+
+    describe_market(paths[0])
 
     stamps = [r["event"].get("msg", {}).get("ts_ms", r["recv_ms"]) for r in records]
     lo, hi = min(stamps), max(stamps)

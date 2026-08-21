@@ -1,0 +1,87 @@
+{
+ "fetched_at_ms": 1787083932217,
+ "response": {
+  "event": {
+   "available_on_brokers": true,
+   "category": "Commodities",
+   "collateral_return_type": "",
+   "event_ticker": "KXGOLD15M-26AUG101900",
+   "exchange_index": 0,
+   "last_updated_ts": "0001-01-01T00:00:00Z",
+   "markets": [
+    {
+     "can_close_early": true,
+     "close_time": "2026-08-10T23:00:00Z",
+     "created_time": "2026-08-08T17:08:57.242856Z",
+     "custom_strike": {
+      "round_digits": "2"
+     },
+     "event_ticker": "KXGOLD15M-26AUG101900",
+     "exchange_index": 0,
+     "expected_expiration_time": "2026-08-10T23:05:00Z",
+     "expiration_time": "2026-08-17T23:00:00Z",
+     "expiration_value": "4399.09",
+     "floor_strike": 4395.85,
+     "last_price_dollars": "0.9900",
+     "latest_expiration_time": "2026-08-17T23:00:00Z",
+     "liquidity_dollars": "0.0000",
+     "market_type": "binary",
+     "no_ask_dollars": "1.0000",
+     "no_bid_dollars": "0.0000",
+     "no_sub_title": "Target price: TBD",
+     "notional_value_dollars": "1.0000",
+     "occurrence_datetime": "2026-08-10T23:05:00Z",
+     "open_interest_fp": "17434.22",
+     "open_time": "2026-08-10T22:45:00Z",
+     "previous_price_dollars": "0.9900",
+     "previous_yes_ask_dollars": "1.0000",
+     "previous_yes_bid_dollars": "0.0000",
+     "price_level_structure": "linear_cent",
+     "price_ranges": [
+      {
+       "end": "1.0000",
+       "start": "0.0000",
+       "step": "0.0100"
+      }
+     ],
+     "result": "yes",
+     "rules_primary": "If the close price of the 1-minute candlestick for Gold on Aug 10, 2026 at 7:00 PM EDT is at least the close price of the 1-minute Pyth GOLD candlestick at 6:45 PM EDT on August 10, 2026 USD/|| Unit ||, then the market resolves to Yes.",
+     "rules_secondary": "The settlement value is rounded to the nearest 2 decimal places. When confirming the settlement value, note the close price for the 1-minute candlestick at a given time is the price at the end of the immediately preceding one-minute interval. For example, the candlestick timestamped 4:59 PM reflects trading during 4:59:00 PM to 4:59:59 PM and closes at 5:00:00 PM. If no data is published by the specified source agency for the specified time, then the most recently available published data will be used to resolve the market.",
+     "settlement_timer_seconds": 1,
+     "settlement_ts": "2026-08-10T23:00:05.467118Z",
+     "settlement_value_dollars": "1.0000",
+     "status": "finalized",
+     "strike_type": "greater_or_equal",
+     "ticker": "KXGOLD15M-26AUG101900-00",
+     "title": "Gold price up in next 15 mins?",
+     "updated_time": "2026-08-10T23:00:05.481779Z",
+     "volume_24h_fp": "0.00",
+     "volume_fp": "32880.91",
+     "yes_ask_dollars": "1.0000",
+     "yes_ask_size_fp": "0.00",
+     "yes_bid_dollars": "0.0000",
+     "yes_bid_size_fp": "0.00",
+     "yes_sub_title": "Target Price: $4,395.85"
+    }
+   ],
+   "mutually_exclusive": false,
+   "product_metadata": {
+    "cadence": "fifteen_min"
+   },
+   "series_ticker": "KXGOLD15M",
+   "settlement_sources": [
+    {
+     "name": "Pyth - Gold",
+     "url": "https://app.pyth.com/explore/Metal.Index.GOLD%2FUSD?returnUrl=%2Fexplore%3Fstate%3Dstable"
+    }
+   ],
+   "strike_date": "2026-08-10T23:00:00Z",
+   "strike_period": "",
+   "sub_title": "Aug 10 - 6:45PM EDT to 7:00PM EDT",
+   "title": "Gold 15 min \u00b7 $4,395.85 target"
+  },
+  "markets": []
+ },
+ "status": 200,
+ "url": "https://api.elections.kalshi.com/trade-api/v2/events/KXGOLD15M-26AUG101900?with_nested_markets=true"
+}

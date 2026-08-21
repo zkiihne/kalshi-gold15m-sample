@@ -7,12 +7,18 @@ Kalshi has no historical order-book API — candles bottom out at 1 minute and
 depth is live-only — so this data only exists because it was captured going
 forward off the WebSocket feed.
 
+Every window ships with its market definition and its settlement, so a tape is
+self-describing: you know the strike the book was quoting against and how it
+resolved. 21 of the 39 windows settled `yes`, 18 `no`.
+
 ## What's in here
 
 | Path | What |
 |---|---|
 | `events/<window>/<date>.ndjson.gz` | lossless raw event log — every message, in receive order |
 | `snapshots/KXGOLD15M-26AUG102130-30/` | the same window resampled to a 100 ms grid, Parquet (format demo) |
+| `metadata/<event>.json` | the REST market record — strike, rules, settlement — verbatim |
+| `MARKETS.csv` | strike and settlement of all 39 windows, flat |
 | `MANIFEST.csv` | every file with byte size and event count |
 | `read_sample.py` | reconstruct the book at any instant; no deps for the NDJSON path |
 
@@ -69,14 +75,47 @@ grid, long format, one row per level per tick:
 Scaled integers so sums stay exact. Long rather than 198 fixed columns because
 Kalshi books are thin — most levels are empty.
 
+## Market definition and settlement
+
+`metadata/<event_ticker>.json` is the unmodified `GET /events/{ticker}?with_nested_markets=true`
+response, wrapped with the fetch time, request URL and HTTP status. 65 fields
+per window. The ones that make a tape gradeable:
+
+| field | meaning |
+|---|---|
+| `floor_strike` | the target price the book is quoting against |
+| `strike_type` | `greater_or_equal` — yes pays if the settlement value clears the strike |
+| `custom_strike.round_digits` | strike rounding, 2 decimals |
+| `open_time` / `close_time` | the window, exchange clock. `close_time` is the last tradeable instant |
+| `expiration_value` | the observed gold price at settlement |
+| `result` | `yes` or `no` |
+| `settlement_value_dollars` | `1.0000` or `0.0000` — what a contract paid |
+| `settlement_ts` | when Kalshi finalized it, a few seconds after close |
+| `status` | `finalized` for every window here |
+| `rules_primary` / `rules_secondary` | the resolution text, including the Pyth candlestick convention |
+| `price_level_structure` + `price_ranges` | tick grid: `linear_cent`, 0.0000–1.0000 step 0.0100 |
+| `settlement_sources` | Pyth Gold, with the feed URL |
+
+`MARKETS.csv` flattens the 14 columns you sort and filter on so you can pick
+windows without opening 39 JSON documents. Every value is comma-free, so no CSV
+parser is needed:
+
+```bash
+awk -F, 'NR>1 && $8=="no"' MARKETS.csv | wc -l    # 18 windows resolved no
+```
+
+Grading a strategy is then: fold the event log to your decision instant, take a
+side, and settle against `result` at `settlement_value_dollars`.
+
 ## Quick start
 
 ```bash
 python3 read_sample.py events/KXGOLD15M-26AUG102130-30/*.ndjson.gz
 ```
 
-Prints the book state at the midpoint of the window and a per-second event
-histogram. Parquet reading needs `pyarrow`; the NDJSON path is stdlib-only.
+Prints the market's strike and settlement, the book state at the midpoint of the
+window, and a per-second event histogram. Parquet reading needs `pyarrow`; the
+NDJSON path is stdlib-only.
 
 ## Caveats
 
@@ -85,3 +124,12 @@ histogram. Parquet reading needs `pyarrow`; the NDJSON path is stdlib-only.
    Two such windows are included deliberately.
 3. The 100 ms sampler is a derived layer. If the two layers ever disagree, the
    event log is the source of truth.
+4. **The metadata is a single post-settlement fetch, not a time series.** Every
+   record was pulled after its market finalized, so fields that mutate while a
+   market is open — `status`, close-time extensions, tick and limit changes —
+   survive only in final form. The strike, the rules, the window bounds and the
+   settlement are exact. The quote and volume fields (`yes_bid_dollars`,
+   `last_price_dollars`, `volume_fp`, `open_interest_fp` and their siblings) are
+   end-of-life values, *not* the state of the market during the window — for
+   that, fold the event log. Read the metadata as the market's definition and
+   outcome, not as a snapshot of its REST surface mid-window.
