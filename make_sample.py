@@ -86,8 +86,12 @@ def write_metadata(wins):
             print(f"skip (no metadata): {w}")
             continue
         doc = json.loads(src.read_text())
-        event = doc["response"]["event"]
-        market = next((m for m in event.get("markets", []) if m["ticker"] == w), None)
+        body = doc["response"]
+        event = body["event"]
+        # GET /events/{ticker} returns markets at the top level; the legacy
+        # with_nested_markets=true form nested them under event.
+        markets = body.get("markets") or event.get("markets") or []
+        market = next((m for m in markets if m["ticker"] == w), None)
         if market is None:
             print(f"skip (window not in event record): {w}")
             continue

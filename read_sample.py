@@ -35,8 +35,10 @@ def describe_market(path):
     if not os.path.isfile(doc_path):
         return
     with open(doc_path) as fh:
-        event = json.load(fh)["response"]["event"]
-    market = next((m for m in event.get("markets", []) if m["ticker"] == window), None)
+        body = json.load(fh)["response"]
+    event = body["event"]
+    markets = body.get("markets") or event.get("markets") or []
+    market = next((m for m in markets if m["ticker"] == window), None)
     if market is None:
         return
 

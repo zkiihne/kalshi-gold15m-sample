@@ -77,9 +77,10 @@ Kalshi books are thin — most levels are empty.
 
 ## Market definition and settlement
 
-`metadata/<event_ticker>.json` is the unmodified `GET /events/{ticker}?with_nested_markets=true`
-response, wrapped with the fetch time, request URL and HTTP status. 65 fields
-per window. The ones that make a tape gradeable:
+`metadata/<event_ticker>.json` is the unmodified `GET /events/{ticker}` response,
+wrapped with the fetch time, request URL and HTTP status. The market objects sit
+in the top-level `markets` array, exactly as the default endpoint returns them.
+64 fields per window. The ones that make a tape gradeable:
 
 | field | meaning |
 |---|---|
